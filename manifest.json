@@ -1,0 +1,32 @@
+{
+  "manifest_version": 3,
+  "name": "Zen Auto-archive",
+  "version": "1.1.0",
+  "description": "Automatically archives inactive unpinned tabs, bringing Arc's auto-archive experience to Zen Browser.",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "zen-auto-archive@local",
+      "strict_min_version": "140.0",
+      "data_collection_permissions": {
+        "required": ["none"]
+      }
+    }
+  },
+  "background": {
+    "scripts": ["defaults.js", "background.js"]
+  },
+  "permissions": ["tabs", "storage", "alarms"],
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_icon": "icons/icon.svg",
+    "default_title": "Zen Auto-archive"
+  },
+  "options_ui": {
+    "page": "options/options.html",
+    "open_in_tab": true
+  },
+  "icons": {
+    "48": "icons/icon.svg",
+    "96": "icons/icon.svg"
+  }
+}
