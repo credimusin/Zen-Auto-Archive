@@ -1,4 +1,4 @@
-# Zen Auto-archive
+# Zen Auto Archive
 
 Extension for [Zen Browser](https://zen-browser.app) bringing Arc's auto-archive feature: inactive unpinned tabs are automatically archived (closed) in the background.
 
@@ -8,9 +8,11 @@ The extension runs quietly in the background and scans tabs periodically (every 
 
 - **Not pinned**: Pinned tabs and Zen Essentials are never touched.
 - **Not active**: The currently active tab in any window is never closed.
-- **Not audible**: Tabs playing music, podcasts, or video calls are never closed.
-- **Not excluded**: Domains listed in the exclusion settings are never closed.
+- **Not audible or sharing media**: Tabs playing music, podcasts, or sharing microphone/camera/screen in video calls are never closed.
+- **Not excluded**: Domains listed in the exclusion settings (including pages opened in Reader View) are never closed.
 - **Inactive**: Inactive for longer than the threshold (**12 hours** by default, matching Arc's default).
+
+You can pause or resume auto-archiving at any time by clicking the **Active / Paused** badge in the toolbar popup.
 
 ### Zen Workspaces (Spaces)
 
@@ -35,7 +37,7 @@ Because archived tabs are standard closed tabs, you can instantly restore any of
 1. In `about:config`, set `xpinstall.signatures.required` to `false`.
 2. Package the extension:
    ```sh
-   zip -r zen-auto-archive.xpi . -x ".*" -x "web-ext-artifacts/*"
+   zip -r zen-auto-archive.xpi manifest.json defaults.js background.js icons popup options LICENSE
    ```
 3. Open `zen-auto-archive.xpi` in Zen Browser to install.
 

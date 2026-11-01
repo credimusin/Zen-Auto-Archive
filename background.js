@@ -10,19 +10,35 @@ async function getSettings() {
   return browser.storage.local.get(DEFAULTS);
 }
 
+function extractHostname(url) {
+  if (!url || typeof url !== "string") {
+    return "";
+  }
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol === "about:" && parsed.pathname === "reader") {
+      const innerUrl = parsed.searchParams.get("url");
+      if (innerUrl) {
+        return new URL(innerUrl).hostname.toLowerCase();
+      }
+    }
+    return parsed.hostname.toLowerCase();
+  } catch {
+    return "";
+  }
+}
+
 function isExcluded(url, excludedDomains) {
-  if (!url || !excludedDomains || !excludedDomains.length) {
+  if (!excludedDomains || !excludedDomains.length) {
     return false;
   }
-  let host;
-  try {
-    host = new URL(url).hostname.toLowerCase();
-  } catch {
+  const host = extractHostname(url);
+  if (!host) {
     return false;
   }
   return excludedDomains.some((domain) => {
-    const d = domain.trim().toLowerCase();
-    return d && (host === d || host.endsWith("." + d));
+    const d = normalizeDomain(domain);
+    return Boolean(d) && (host === d || host.endsWith("." + d));
   });
 }
 
@@ -43,11 +59,26 @@ async function queryAllTabs() {
     }
   }
   const seen = new Set();
-  return tabs.filter((tab) => !seen.has(tab.id) && seen.add(tab.id));
+  return tabs.filter((tab) => {
+    if (
+      tab.id == null ||
+      tab.id === browser.tabs.TAB_ID_NONE ||
+      seen.has(tab.id)
+    ) {
+      return false;
+    }
+    seen.add(tab.id);
+    return true;
+  });
+}
+
+function isSharingMedia(tab) {
+  const state = tab.sharingState;
+  return Boolean(state && (state.camera || state.microphone || state.screen));
 }
 
 function shouldArchiveTab(tab, settings, now, thresholdMs) {
-  if (tab.pinned || tab.active || tab.audible) {
+  if (tab.pinned || tab.active || tab.audible || isSharingMedia(tab)) {
     return false;
   }
   if (isExcluded(tab.url, settings.excludedDomains)) {
@@ -65,39 +96,44 @@ async function cleanTabs() {
   }
 
   isCleaning = true;
+  lastActivityCheck = Date.now();
   try {
     const settings = await getSettings();
     if (!settings.enabled) {
       return 0;
     }
 
-    const thresholdMs = settings.thresholdHours * 3600 * 1000;
+    const thresholdHours = Number(settings.thresholdHours);
+    if (!Number.isFinite(thresholdHours) || thresholdHours <= 0) {
+      return 0;
+    }
+
+    const thresholdMs = thresholdHours * 3600 * 1000;
     const now = Date.now();
     const tabs = await queryAllTabs();
     const toClose = tabs.filter((tab) =>
       shouldArchiveTab(tab, settings, now, thresholdMs),
     );
 
-    const closedTabs = [];
+    let closedCount = 0;
     for (const tab of toClose) {
       try {
         await browser.tabs.remove(tab.id);
-        closedTabs.push({ url: tab.url, title: tab.title });
+        closedCount++;
       } catch {
       }
     }
 
-    if (closedTabs.length > 0) {
+    if (closedCount > 0) {
       await browser.storage.local.set({
         lastCleanup: {
           timestamp: now,
-          count: closedTabs.length,
-          tabs: closedTabs,
+          count: closedCount,
         },
       });
     }
 
-    return closedTabs.length;
+    return closedCount;
   } finally {
     isCleaning = false;
   }
@@ -115,7 +151,6 @@ function onActivity() {
   if (now - lastActivityCheck < ACTIVITY_THROTTLE_MS) {
     return;
   }
-  lastActivityCheck = now;
   cleanTabs();
 }
 
@@ -129,7 +164,11 @@ browser.storage.onChanged.addListener((changes, area) => {
 });
 
 browser.tabs.onActivated.addListener(onActivity);
-browser.windows.onFocusChanged.addListener(onActivity);
+browser.windows.onFocusChanged.addListener((windowId) => {
+  if (windowId !== browser.windows.WINDOW_ID_NONE) {
+    onActivity();
+  }
+});
 
 browser.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === ALARM_NAME) {
@@ -139,16 +178,14 @@ browser.alarms.onAlarm.addListener((alarm) => {
 
 async function getStats() {
   const settings = await getSettings();
-  const thresholdMs = settings.thresholdHours * 3600 * 1000;
-  const now = Date.now();
   const tabs = await queryAllTabs();
-  const overdue = tabs.filter((tab) =>
-    shouldArchiveTab(tab, settings, now, thresholdMs),
+  const monitored = tabs.filter(
+    (tab) => !tab.pinned && !isExcluded(tab.url, settings.excludedDomains),
   ).length;
 
   return {
-    total: tabs.length,
-    overdue,
+    enabled: Boolean(settings.enabled),
+    monitored,
     thresholdHours: settings.thresholdHours,
     lastCleanup: settings.lastCleanup,
   };
@@ -156,6 +193,14 @@ async function getStats() {
 
 browser.runtime.onMessage.addListener(async (message) => {
   if (message?.type === "getStats") {
+    return getStats();
+  }
+  if (message?.type === "setEnabled") {
+    const enabled = Boolean(message.enabled);
+    await browser.storage.local.set({ enabled });
+    if (enabled) {
+      await cleanTabs();
+    }
     return getStats();
   }
   return undefined;

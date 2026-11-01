@@ -2,14 +2,14 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Zen Auto-archive Settings</title>
+  <title>Zen Auto Archive Settings</title>
   <link rel="stylesheet" href="options.css" />
 </head>
 <body>
   <main>
     <header class="header">
       <img src="../icons/icon.svg" alt="" width="28" height="28" />
-      <h1>Zen Auto-archive</h1>
+      <h1>Zen Auto Archive</h1>
     </header>
 
     <section>
@@ -19,13 +19,13 @@
         Active tabs, pinned tabs, and tabs playing audio are never touched.
       </p>
       <div class="controls-row">
-        <input type="number" id="threshold" min="0.05" step="0.5" />
+        <input type="number" id="threshold" min="0.5" step="0.5" />
         <span>hours</span>
         <div class="presets" id="threshold-presets">
-          <button data-hours="6">6 h</button>
-          <button data-hours="12">12 h</button>
-          <button data-hours="24">24 h</button>
-          <button data-hours="168">7 days</button>
+          <button type="button" data-hours="6">6 h</button>
+          <button type="button" data-hours="12">12 h</button>
+          <button type="button" data-hours="24">24 h</button>
+          <button type="button" data-hours="168">7 days</button>
         </div>
       </div>
     </section>
@@ -39,10 +39,10 @@
         <input type="number" id="check-period" min="1" step="1" />
         <span>minutes</span>
         <div class="presets" id="period-presets">
-          <button data-minutes="5">5 min</button>
-          <button data-minutes="15">15 min</button>
-          <button data-minutes="30">30 min</button>
-          <button data-minutes="60">1 h</button>
+          <button type="button" data-minutes="5">5 min</button>
+          <button type="button" data-minutes="15">15 min</button>
+          <button type="button" data-minutes="30">30 min</button>
+          <button type="button" data-minutes="60">1 h</button>
         </div>
       </div>
     </section>
