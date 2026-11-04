@@ -34,12 +34,16 @@ Because archived tabs are standard closed tabs, you can instantly restore any of
 
 ### Permanent Install
 
+From [Mazilla addons](https://addons.mozilla.org/firefox/downloads/file/5206201/zen_auto_archive-1.1.1.zip).  
+
+Or from file `.xpi` file:
 1. In `about:config`, set `xpinstall.signatures.required` to `false`.
 2. Package the extension:
    ```sh
    zip -r zen-auto-archive.xpi manifest.json defaults.js background.js icons popup options LICENSE
    ```
 3. Open `zen-auto-archive.xpi` in Zen Browser to install.
+
 
 ## License
 
