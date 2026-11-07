@@ -34,7 +34,7 @@ Because archived tabs are standard closed tabs, you can instantly restore any of
 
 ### Permanent Install
 
-From release.  
+From [release](https://github.com/credimusin/Zen-Auto-Archive/releases/tag/1.1.1) (download and open .xpi file in a browser).  
 
 Or from file `.xpi` file:
 1. In `about:config`, set `xpinstall.signatures.required` to `false`.
